@@ -1,5 +1,6 @@
 // SearchIQS Cleaner - Content Script
 // Removes unwanted dialog boxes and overlays from www.searchiqs.com
+// Also restores normal right-click functionality
 
 console.log('SearchIQS Cleaner: Content script loaded');
 
@@ -34,10 +35,50 @@ function removeUnwantedElements() {
     return removedCount;
 }
 
+// Function to restore normal right-click behavior
+function enableRightClick() {
+    // Remove any existing contextmenu event listeners by cloning elements
+    // This is a more aggressive approach that removes all existing handlers
+
+    // Method 1: Prevent the custom context menu event from firing
+    document.addEventListener('contextmenu', function (e) {
+        // Stop the event from being handled by the page's JavaScript
+        e.stopImmediatePropagation();
+        // Allow the default browser context menu
+        // Don't preventDefault() - we want the normal menu
+        console.log('SearchIQS Cleaner: Restored right-click functionality');
+    }, true); // Use capture phase to intercept before page handlers
+
+    // Method 2: Also handle any attempts to disable right-click via other events
+    ['mousedown', 'mouseup', 'selectstart'].forEach(eventType => {
+        document.addEventListener(eventType, function (e) {
+            if (e.button === 2) { // Right mouse button
+                e.stopImmediatePropagation();
+                console.log(`SearchIQS Cleaner: Prevented ${eventType} interference with right-click`);
+            }
+        }, true);
+    });
+
+    // Method 3: Remove common CSS that disables text selection (which can affect right-click)
+    const style = document.createElement('style');
+    style.textContent = `
+        * {
+            -webkit-user-select: auto !important;
+            -moz-user-select: auto !important;
+            -ms-user-select: auto !important;
+            user-select: auto !important;
+        }
+    `;
+    document.head.appendChild(style);
+
+    console.log('SearchIQS Cleaner: Right-click protection enabled');
+}
+
 // Function to check for and remove elements immediately
 function initialCleanup() {
     console.log('SearchIQS Cleaner: Performing initial cleanup');
     removeUnwantedElements();
+    enableRightClick();
 }
 
 // Function to set up MutationObserver for dynamically added elements

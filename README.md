@@ -1,15 +1,29 @@
 # SearchIQS Cleaner - Safari Extension
 
-A Safari extension that automatically removes unwanted dialog boxes and overlays from www.searchiqs.com for a cleaner browsing experience.
+A Safari extension that automatically removes unwanted dialog boxes and overlays from www.searchiqs.com for a cleaner browsing experience, and restores normal right-click functionality.
 
 ## What It Does
 
-This extension automatically detects and removes two specific unwanted elements from the SearchIQS website:
+This extension automatically detects and removes unwanted elements from the SearchIQS website:
 
 1. **Dialog Box**: The modal dialog with classes `ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable ui-resizable`
 2. **Overlay**: The background overlay with classes `ui-widget-overlay ui-front`
+3. **Right-Click Blocking**: Disables the annoying "Action not allowed on this page" popup and restores normal browser context menu functionality
 
 The extension works silently in the background - no user interaction required.
+
+## Features
+
+### ✅ DOM Element Removal
+- Automatically removes unwanted dialog boxes and overlays
+- Uses MutationObserver to catch dynamically loaded elements
+- Works immediately on page load and for content loaded later
+
+### ✅ Right-Click Restoration
+- Prevents "Action not allowed on this page" popup
+- Restores normal browser context menu (copy, paste, inspect element, etc.)
+- Handles multiple blocking methods (contextmenu, mousedown, mouseup events)
+- Re-enables text selection that may have been disabled
 
 ## Installation Instructions
 
@@ -53,7 +67,9 @@ To distribute this extension publicly:
 ## How to Use
 
 1. Navigate to https://www.searchiqs.com in Safari
-2. The extension automatically detects and removes unwanted dialogs/overlays
+2. The extension automatically:
+   - Detects and removes unwanted dialogs/overlays
+   - Restores normal right-click functionality
 3. Check the browser console (Developer Tools) to see removal logs if needed
 
 ## Troubleshooting
@@ -68,6 +84,11 @@ To distribute this extension publicly:
 - Go to Console tab and look for "SearchIQS Cleaner" messages
 - The extension only removes elements if they exist on the page
 
+### Right-Click Still Not Working
+- Try refreshing the page after enabling the extension
+- Check the console for "SearchIQS Cleaner: Restored right-click functionality" messages
+- Some pages may have multiple layers of protection that require a page refresh
+
 ### Development Issues
 - Make sure "Allow unsigned extensions" is enabled in Safari Developer settings
 - Rebuild the project in Xcode if you make changes
@@ -79,13 +100,14 @@ To distribute this extension publicly:
 - **Permissions**: `activeTab` (minimal permissions for security)
 - **Target Domain**: `*://www.searchiqs.com/*`
 - **Content Script Timing**: `document_end` with MutationObserver for dynamic content
+- **Right-Click Protection**: Event capture phase interception with `stopImmediatePropagation()`
 
 ## File Structure
 
 ```
 Shared (Extension)/Resources/
 ├── manifest.json          # Extension configuration
-├── content.js             # Main functionality (DOM manipulation)
+├── content.js             # Main functionality (DOM manipulation + right-click restoration)
 ├── background.js          # Minimal background script
 ├── _locales/en/messages.json  # Localization
 └── images/                # Extension icons
@@ -95,6 +117,7 @@ Shared (Extension)/Resources/
 
 - The extension uses CSS selectors to target specific elements
 - MutationObserver watches for dynamically loaded content
+- Right-click restoration uses event capture phase to intercept before page handlers
 - Console logging helps with debugging
 - Works entirely through content scripts (no complex background processes)
 
@@ -102,7 +125,7 @@ Shared (Extension)/Resources/
 
 This extension:
 - ✅ Only accesses www.searchiqs.com
-- ✅ Only removes specified DOM elements
+- ✅ Only removes specified DOM elements and restores browser functionality
 - ✅ Does not collect or transmit any user data
 - ✅ Does not track browsing behavior
 - ✅ Uses minimal permissions (`activeTab` only) 
