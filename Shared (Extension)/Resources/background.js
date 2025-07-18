@@ -1,6 +1,7 @@
-browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log("Received request: ", request);
+// SearchIQS Cleaner - Background Script
+// Minimal background script for the extension
 
-    if (request.greeting === "hello")
-        return Promise.resolve({ farewell: "goodbye" });
-});
+console.log('SearchIQS Cleaner: Background script loaded');
+
+// This extension primarily works through content scripts
+// No complex background functionality needed for DOM manipulation

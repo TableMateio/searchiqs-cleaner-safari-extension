@@ -1,10 +1,10 @@
 {
     "extension_name": {
-        "message": "IQSer",
+        "message": "SearchIQS Cleaner",
         "description": "The display name for the extension."
     },
     "extension_description": {
-        "message": "This is IQSer. You should tell us what your extension does here.",
+        "message": "Automatically removes unwanted dialog boxes and overlays from SearchIQS website for a cleaner browsing experience.",
         "description": "Description of what the extension does."
     }
 }
