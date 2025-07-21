@@ -34,9 +34,10 @@ The extension works silently in the background - no user interaction required.
    - Go to **Safari > Settings > Advanced**
    - Check **"Show features for web developers"**
 
-2. **Allow Unsigned Extensions**:
+2. **⚠️ CRITICAL: Allow Unsigned Extensions**:
    - Go to **Safari > Settings > Developer** 
-   - Check **"Allow unsigned extensions"**
+   - ✅ Check **"Allow unsigned extensions"**
+   - **🚨 Without this step, the extension will NOT appear in Safari's Extensions list!**
 
 3. **Build the Extension**:
    - Open `IQSer.xcodeproj` in Xcode
@@ -74,6 +75,15 @@ To distribute this extension publicly:
 
 ## Troubleshooting
 
+### ⚠️ Extension Not Appearing in Safari Extensions List
+**This is the #1 most common issue!**
+
+- ✅ **MUST HAVE**: Go to **Safari > Settings > Developer** and check **"Allow unsigned extensions"**
+- ✅ **MUST HAVE**: Go to **Safari > Settings > Advanced** and check **"Show features for web developers"**
+- 🔄 **Restart Safari** completely (Cmd+Q, then reopen) after enabling these settings
+- 🔨 **Rebuild** the project in Xcode if you made changes
+- ⚙️ Check that the extension is registered: `pluginkit -m | grep IQSer` should show `Tablemate.IQSer.Extension(1.0)`
+
 ### Extension Not Working
 - Verify the extension is enabled in Safari Settings > Extensions
 - Make sure you're on www.searchiqs.com (not just searchiqs.com)
@@ -93,6 +103,7 @@ To distribute this extension publicly:
 - Make sure "Allow unsigned extensions" is enabled in Safari Developer settings
 - Rebuild the project in Xcode if you make changes
 - Clear Safari cache if changes aren't appearing
+- Try `pluginkit -r` to reset the plugin registry if extensions aren't registering
 
 ## Technical Details
 
