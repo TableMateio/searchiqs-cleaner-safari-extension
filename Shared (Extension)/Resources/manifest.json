@@ -20,7 +20,12 @@
     "content_scripts": [
         {
             "js": [
+                "config.js",
+                "airtable-panel.js",
                 "content.js"
+            ],
+            "css": [
+                "panel-styles.css"
             ],
             "matches": [
                 "*://www.searchiqs.com/*"
@@ -30,5 +35,8 @@
     ],
     "permissions": [
         "activeTab"
+    ],
+    "host_permissions": [
+        "https://api.airtable.com/*"
     ]
 }

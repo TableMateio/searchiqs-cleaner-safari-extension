@@ -1,6 +1,7 @@
 // SearchIQS Cleaner - Content Script
 // Removes unwanted dialog boxes and overlays from www.searchiqs.com
 // Also restores normal right-click functionality
+// Provides Airtable integration panel for tax surplus records
 
 console.log('SearchIQS Cleaner: Content script loaded');
 

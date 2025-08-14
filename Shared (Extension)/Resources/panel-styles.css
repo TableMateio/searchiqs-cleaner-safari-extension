@@ -1,0 +1,307 @@
+/* Airtable Panel Styles */
+
+/* Hover trigger in top-left corner */
+#airtable-panel-trigger {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    cursor: pointer;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    user-select: none;
+}
+
+#airtable-panel-trigger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%);
+}
+
+#airtable-panel-trigger:active {
+    transform: translateY(0);
+}
+
+/* Side panel */
+#airtable-panel {
+    position: fixed;
+    top: 0;
+    left: -350px;
+    width: 350px;
+    height: 100vh;
+    background: #ffffff;
+    border-right: 1px solid #e1e5e9;
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.08);
+    z-index: 9999;
+    transition: left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#airtable-panel.open {
+    left: 0;
+}
+
+/* Panel header */
+.panel-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom: 1px solid #e1e5e9;
+}
+
+.panel-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 10px 0;
+}
+
+.panel-subtitle {
+    font-size: 14px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* Close button */
+.panel-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+}
+
+.panel-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Controls section */
+.panel-controls {
+    padding: 20px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Search bar */
+.search-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px 12px 40px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 16px;
+}
+
+/* View selector */
+.view-selector {
+    margin-bottom: 10px;
+}
+
+.view-selector label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.view-dropdown {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.view-dropdown:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* Records list */
+.panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.records-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.record-item {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    position: relative;
+}
+
+.record-item:hover {
+    background-color: #f8f9fb;
+}
+
+.record-item:active {
+    background-color: #e8eaf6;
+}
+
+.record-item.copied {
+    background-color: #e8f5e8;
+}
+
+.record-item.copied::after {
+    content: "✓ Copied!";
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    color: #4caf50;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Record item content */
+.record-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+}
+
+.record-company {
+    font-size: 14px;
+    color: #667eea;
+    margin: 0 0 8px 0;
+    font-weight: 500;
+}
+
+.record-details {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.record-detail {
+    margin: 2px 0;
+}
+
+.record-detail strong {
+    color: #444;
+}
+
+/* Loading state */
+.loading {
+    padding: 40px 20px;
+    text-align: center;
+    color: #666;
+}
+
+.loading::before {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e1e5e9;
+    border-top: 2px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error state */
+.error {
+    padding: 20px;
+    color: #e74c3c;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* Empty state */
+.empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-height: 600px) {
+    .panel-header {
+        padding: 15px 20px;
+    }
+    
+    .panel-controls {
+        padding: 15px 20px;
+    }
+    
+    .record-item {
+        padding: 12px 20px;
+    }
+}
+
+/* Scrollbar styling */
+.panel-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.panel-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.panel-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
