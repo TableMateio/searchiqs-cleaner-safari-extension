@@ -5,6 +5,26 @@
 
 console.log('SearchIQS Cleaner: Content script loaded v2.0 - WITH AIRTABLE PANEL');
 
+// ===== AIRTABLE CONFIGURATION =====
+const AIRTABLE_CONFIG = {
+    API_TOKEN: 'patfh1nE1aiynmwSR.fa34b0313c95f1e33b318a07be673b416d82b5bac740ffec673580bd2fd92aac',
+    BASE_ID: 'appZMhZh6hDrzAnuV',
+    TABLE_ID: 'tblhq8mn3e6u4Ta39',
+    DEFAULT_VIEW_ID: 'viwr9ZPuSbniamu0C',
+    BASE_URL: 'https://api.airtable.com/v0',
+    FIELDS: [
+        'Last (From Owner)',
+        'First (From Owner)', 
+        'Company Name',
+        'SBL',
+        'County',
+        'City',
+        'First Line Address',
+        'Full Address'
+    ]
+};
+console.log('SearchIQS Cleaner: Airtable config embedded in content script');
+
 // Function to remove unwanted elements
 function removeUnwantedElements() {
     let removedCount = 0;
@@ -106,12 +126,62 @@ function enableRightClick() {
     console.log('SearchIQS Cleaner: Right-click protection enabled');
 }
 
+// Function to create the Airtable panel trigger button
+function createAirtableTrigger() {
+    console.log('SearchIQS Cleaner: Creating Airtable trigger button...');
+    
+    const trigger = document.createElement('div');
+    trigger.id = 'airtable-panel-trigger';
+    trigger.innerHTML = '📋';
+    trigger.title = 'Open Airtable Panel';
+    trigger.style.cssText = `
+        position: fixed !important;
+        top: 10px !important;
+        left: 10px !important;
+        width: 40px !important;
+        height: 40px !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border-radius: 8px !important;
+        cursor: pointer !important;
+        z-index: 999999 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: white !important;
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        user-select: none !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    `;
+    
+    trigger.addEventListener('click', () => {
+        alert('Airtable panel clicked! This confirms the trigger button is working. Full panel coming next...');
+        console.log('SearchIQS Cleaner: Trigger button clicked successfully!');
+    });
+    
+    trigger.addEventListener('mouseenter', () => {
+        trigger.style.transform = 'translateY(-2px)';
+        trigger.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.2)';
+    });
+    
+    trigger.addEventListener('mouseleave', () => {
+        trigger.style.transform = 'translateY(0)';
+        trigger.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+    });
+    
+    document.body.appendChild(trigger);
+    console.log('SearchIQS Cleaner: ✅ Airtable trigger button created and added to page!');
+}
+
 // Function to check for and remove elements immediately
 function initialCleanup() {
     console.log('SearchIQS Cleaner: Performing initial cleanup');
     removeUnwantedElements();
     modifyParty2NameInput();
     enableRightClick();
+    createAirtableTrigger();
 }
 
 // Function to set up MutationObserver for dynamically added elements
