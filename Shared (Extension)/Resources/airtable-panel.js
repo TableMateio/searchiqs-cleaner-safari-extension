@@ -1,7 +1,7 @@
 // Airtable Panel - SearchIQS Extension
 // Provides a collapsible side panel with Airtable data integration
 
-console.log('SearchIQS Cleaner: Airtable panel script loaded');
+console.log('SearchIQS Cleaner: Airtable panel script loaded v2.0 - NEW PANEL FEATURE');
 
 class AirtablePanel {
     constructor() {

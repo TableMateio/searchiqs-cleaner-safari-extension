@@ -3,7 +3,7 @@
 // Also restores normal right-click functionality
 // Provides Airtable integration panel for tax surplus records
 
-console.log('SearchIQS Cleaner: Content script loaded');
+console.log('SearchIQS Cleaner: Content script loaded v2.0 - WITH AIRTABLE PANEL');
 
 // Function to remove unwanted elements
 function removeUnwantedElements() {
@@ -149,7 +149,8 @@ function setupMutationObserver() {
 
 // Main execution
 function init() {
-    console.log('SearchIQS Cleaner: Initializing on', window.location.href);
+    console.log('SearchIQS Cleaner: Initializing v2.0 WITH AIRTABLE PANEL on', window.location.href);
+    console.log('SearchIQS Cleaner: 🚀 NEW VERSION - EXPECT AIRTABLE PANEL TRIGGER BUTTON!');
 
     // Perform initial cleanup
     initialCleanup();
