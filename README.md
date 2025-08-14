@@ -1,6 +1,6 @@
 # SearchIQS Cleaner - Safari Extension
 
-A Safari extension that automatically removes unwanted dialog boxes and overlays from www.searchiqs.com for a cleaner browsing experience, restores normal right-click functionality, and enables disabled form fields.
+A Safari extension that automatically removes unwanted dialog boxes and overlays from www.searchiqs.com for a cleaner browsing experience, restores normal right-click functionality, enables disabled form fields, and provides direct access to tax surplus records through an integrated Airtable panel.
 
 ## What It Does
 
@@ -10,6 +10,7 @@ This extension automatically detects and removes unwanted elements from the Sear
 2. **Overlay**: The background overlay with classes `ui-widget-overlay ui-front`
 3. **Right-Click Blocking**: Disables the annoying "Action not allowed on this page" popup and restores normal browser context menu functionality
 4. **Party2Name Input Field**: Enables the "Party2Name" input field by removing the `disabled` attribute and `aspNetDisabled` class
+5. **Airtable Integration Panel**: Provides a collapsible side panel with direct access to tax surplus records from Airtable
 
 The extension works silently in the background - no user interaction required.
 
@@ -31,6 +32,15 @@ The extension works silently in the background - no user interaction required.
 - Removes `disabled="disabled"` attribute to make the field editable
 - Removes `aspNetDisabled` class for proper styling
 - Works on page load and dynamically loaded content
+
+### ✅ Airtable Integration Panel
+- **Collapsible Side Panel**: Hover trigger in top-left corner with smooth animations
+- **Real-time Search**: Search across all record fields with instant filtering
+- **View Selector**: Dropdown to choose different Airtable views with caching
+- **Click-to-Copy**: Click any record to automatically copy all data to clipboard
+- **Modern UI**: Sleek gradient design with responsive layout and visual feedback
+- **Error Handling**: Comprehensive error states and loading indicators
+- **Secure**: API token stored separately with proper gitignore protection
 
 ## Installation Instructions
 
@@ -79,7 +89,14 @@ To distribute this extension publicly:
    - Detects and removes unwanted dialogs/overlays
    - Restores normal right-click functionality
    - Enables the Party2Name input field for editing
-3. Check the browser console (Developer Tools) to see modification logs if needed
+   - Shows the Airtable panel trigger (📋) in the top-left corner
+3. **Using the Airtable Panel**:
+   - Click the 📋 icon in the top-left to open the side panel
+   - Use the search bar to filter records by any field
+   - Select different views from the dropdown
+   - Click any record to copy all its data to your clipboard
+   - Click outside the panel or the × button to close it
+4. Check the browser console (Developer Tools) to see modification logs if needed
 
 ## Troubleshooting
 
@@ -107,6 +124,13 @@ To distribute this extension publicly:
 - Check the console for "SearchIQS Cleaner: Restored right-click functionality" messages
 - Some pages may have multiple layers of protection that require a page refresh
 
+### Airtable Panel Issues
+- **Panel not showing**: Check browser console for API errors or network issues
+- **No records loading**: Verify Airtable API token and permissions in config.js
+- **Search not working**: Try clearing the search field and reload the page
+- **Copy to clipboard fails**: Grant clipboard permissions when prompted by Safari
+- **View dropdown empty**: Check network connection and Airtable API access
+
 ### Development Issues
 - Make sure "Allow unsigned extensions" is enabled in Safari Developer settings
 - Rebuild the project in Xcode if you make changes
@@ -116,17 +140,23 @@ To distribute this extension publicly:
 ## Technical Details
 
 - **Manifest Version**: 3 (latest Safari Web Extensions standard)
-- **Permissions**: `activeTab` (minimal permissions for security)
+- **Permissions**: `activeTab` + `host_permissions` for `https://api.airtable.com/*`
 - **Target Domain**: `*://www.searchiqs.com/*`
 - **Content Script Timing**: `document_end` with MutationObserver for dynamic content
 - **Right-Click Protection**: Event capture phase interception with `stopImmediatePropagation()`
+- **Airtable Integration**: REST API v0 with bearer token authentication
+- **UI Framework**: Pure vanilla JavaScript with CSS3 animations and gradients
+- **Clipboard API**: Modern async clipboard API with fallback for older browsers
 
 ## File Structure
 
 ```
 Shared (Extension)/Resources/
-├── manifest.json          # Extension configuration
+├── manifest.json          # Extension configuration and permissions
 ├── content.js             # Main functionality (DOM manipulation + right-click restoration)
+├── airtable-panel.js      # Airtable integration and side panel functionality
+├── config.js              # Airtable API configuration and field mappings
+├── panel-styles.css       # Modern UI styling for the Airtable panel
 ├── background.js          # Minimal background script
 ├── _locales/en/messages.json  # Localization
 └── images/                # Extension icons
@@ -138,14 +168,19 @@ Shared (Extension)/Resources/
 - MutationObserver watches for dynamically loaded content
 - Right-click restoration uses event capture phase to intercept before page handlers
 - Form field modification removes disabled attributes and unwanted CSS classes
-- Console logging helps with debugging
+- Airtable integration uses modern fetch API with proper error handling
+- Modular architecture separates concerns (config, UI, functionality)
+- Responsive design adapts to different screen sizes and browser states
+- Console logging helps with debugging and monitoring
 - Works entirely through content scripts (no complex background processes)
 
 ## Privacy
 
 This extension:
-- ✅ Only accesses www.searchiqs.com
+- ✅ Only accesses www.searchiqs.com and api.airtable.com (for tax records)
 - ✅ Only removes specified DOM elements and restores browser functionality
-- ✅ Does not collect or transmit any user data
+- ✅ Does not collect or transmit any user data beyond Airtable API calls
 - ✅ Does not track browsing behavior
-- ✅ Uses minimal permissions (`activeTab` only) 
+- ✅ Uses minimal permissions (`activeTab` + necessary host permissions)
+- ✅ API tokens stored locally (consider secure storage for production)
+- ✅ All data processing happens locally in the browser 
