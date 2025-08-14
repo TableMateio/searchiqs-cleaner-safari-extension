@@ -35,6 +35,37 @@ function removeUnwantedElements() {
     return removedCount;
 }
 
+// Function to modify the Party2Name input field
+function modifyParty2NameInput() {
+    const inputElement = document.getElementById('ContentPlaceHolder1_txtParty2Name');
+
+    if (inputElement) {
+        let modified = false;
+
+        // Remove the disabled attribute
+        if (inputElement.hasAttribute('disabled')) {
+            inputElement.removeAttribute('disabled');
+            console.log('SearchIQS Cleaner: Removed disabled attribute from Party2Name input');
+            modified = true;
+        }
+
+        // Remove 'aspNetDisabled' from the class attribute
+        if (inputElement.classList.contains('aspNetDisabled')) {
+            inputElement.classList.remove('aspNetDisabled');
+            console.log('SearchIQS Cleaner: Removed aspNetDisabled class from Party2Name input');
+            modified = true;
+        }
+
+        if (modified) {
+            console.log('SearchIQS Cleaner: Successfully modified Party2Name input field');
+        }
+
+        return modified;
+    }
+
+    return false;
+}
+
 // Function to restore normal right-click behavior
 function enableRightClick() {
     // Remove any existing contextmenu event listeners by cloning elements
@@ -78,6 +109,7 @@ function enableRightClick() {
 function initialCleanup() {
     console.log('SearchIQS Cleaner: Performing initial cleanup');
     removeUnwantedElements();
+    modifyParty2NameInput();
     enableRightClick();
 }
 
@@ -101,6 +133,7 @@ function setupMutationObserver() {
         if (shouldCheck) {
             console.log('SearchIQS Cleaner: DOM mutation detected, checking for unwanted elements');
             removeUnwantedElements();
+            modifyParty2NameInput();
         }
     });
 
@@ -127,6 +160,7 @@ function init() {
     setTimeout(() => {
         console.log('SearchIQS Cleaner: Running delayed cleanup check');
         removeUnwantedElements();
+        modifyParty2NameInput();
     }, 1000);
 }
 

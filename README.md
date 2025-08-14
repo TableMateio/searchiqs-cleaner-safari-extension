@@ -1,6 +1,6 @@
 # SearchIQS Cleaner - Safari Extension
 
-A Safari extension that automatically removes unwanted dialog boxes and overlays from www.searchiqs.com for a cleaner browsing experience, and restores normal right-click functionality.
+A Safari extension that automatically removes unwanted dialog boxes and overlays from www.searchiqs.com for a cleaner browsing experience, restores normal right-click functionality, and enables disabled form fields.
 
 ## What It Does
 
@@ -9,6 +9,7 @@ This extension automatically detects and removes unwanted elements from the Sear
 1. **Dialog Box**: The modal dialog with classes `ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable ui-resizable`
 2. **Overlay**: The background overlay with classes `ui-widget-overlay ui-front`
 3. **Right-Click Blocking**: Disables the annoying "Action not allowed on this page" popup and restores normal browser context menu functionality
+4. **Party2Name Input Field**: Enables the "Party2Name" input field by removing the `disabled` attribute and `aspNetDisabled` class
 
 The extension works silently in the background - no user interaction required.
 
@@ -24,6 +25,12 @@ The extension works silently in the background - no user interaction required.
 - Restores normal browser context menu (copy, paste, inspect element, etc.)
 - Handles multiple blocking methods (contextmenu, mousedown, mouseup events)
 - Re-enables text selection that may have been disabled
+
+### ✅ Form Field Enhancement
+- Automatically enables the Party2Name input field (`ContentPlaceHolder1_txtParty2Name`)
+- Removes `disabled="disabled"` attribute to make the field editable
+- Removes `aspNetDisabled` class for proper styling
+- Works on page load and dynamically loaded content
 
 ## Installation Instructions
 
@@ -71,7 +78,8 @@ To distribute this extension publicly:
 2. The extension automatically:
    - Detects and removes unwanted dialogs/overlays
    - Restores normal right-click functionality
-3. Check the browser console (Developer Tools) to see removal logs if needed
+   - Enables the Party2Name input field for editing
+3. Check the browser console (Developer Tools) to see modification logs if needed
 
 ## Troubleshooting
 
@@ -126,9 +134,10 @@ Shared (Extension)/Resources/
 
 ## Development Notes
 
-- The extension uses CSS selectors to target specific elements
+- The extension uses CSS selectors and element IDs to target specific elements
 - MutationObserver watches for dynamically loaded content
 - Right-click restoration uses event capture phase to intercept before page handlers
+- Form field modification removes disabled attributes and unwanted CSS classes
 - Console logging helps with debugging
 - Works entirely through content scripts (no complex background processes)
 
