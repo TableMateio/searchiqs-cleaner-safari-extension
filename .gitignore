@@ -5,6 +5,9 @@
 .env.test
 .env.production
 
+# Configuration files with sensitive data
+Shared (Extension)/Resources/config.js
+
 # Xcode user data
 *.xcuserdata/
 xcuserdata/

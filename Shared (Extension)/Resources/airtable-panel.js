@@ -347,15 +347,57 @@ class AirtablePanel {
 let airtablePanel;
 
 function initializeAirtablePanel() {
-    if (!airtablePanel && typeof AIRTABLE_CONFIG !== 'undefined') {
-        airtablePanel = new AirtablePanel();
-        console.log('SearchIQS Cleaner: Airtable panel initialized');
+    console.log('SearchIQS Cleaner: Attempting to initialize Airtable panel...');
+    console.log('SearchIQS Cleaner: AIRTABLE_CONFIG available?', typeof AIRTABLE_CONFIG !== 'undefined');
+    
+    if (!airtablePanel) {
+        if (typeof AIRTABLE_CONFIG !== 'undefined') {
+            console.log('SearchIQS Cleaner: Config found, initializing panel');
+            airtablePanel = new AirtablePanel();
+            console.log('SearchIQS Cleaner: Airtable panel initialized successfully');
+        } else {
+            console.warn('SearchIQS Cleaner: AIRTABLE_CONFIG not found, but creating basic trigger');
+            // Create a basic trigger even without config for debugging
+            createDebugTrigger();
+        }
     }
 }
 
+function createDebugTrigger() {
+    const trigger = document.createElement('div');
+    trigger.id = 'airtable-panel-trigger';
+    trigger.innerHTML = '🔧';
+    trigger.title = 'Debug: Config Missing';
+    trigger.style.cssText = `
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        width: 40px;
+        height: 40px;
+        background: red;
+        border-radius: 8px;
+        cursor: pointer;
+        z-index: 10000;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    `;
+    trigger.addEventListener('click', () => {
+        alert('Debug: Extension loaded but config.js missing or incomplete.\nCheck console for details.');
+    });
+    document.body.appendChild(trigger);
+    console.log('SearchIQS Cleaner: Debug trigger created');
+}
+
 // Initialize immediately if config is already loaded, otherwise wait a bit
+console.log('SearchIQS Cleaner: Starting Airtable panel initialization...');
 if (typeof AIRTABLE_CONFIG !== 'undefined') {
     initializeAirtablePanel();
 } else {
+    console.log('SearchIQS Cleaner: Config not ready, waiting...');
     setTimeout(initializeAirtablePanel, 100);
+    // Also try again after a longer delay
+    setTimeout(initializeAirtablePanel, 1000);
 }
