@@ -253,15 +253,15 @@ class AirtablePanel {
 
         // View dropdown change
         this.viewDropdownEl.addEventListener('change', (e) => this.handleViewChange(e.target.value));
-
-        // Click outside to close
-        document.addEventListener('click', (e) => {
-            if (this.isOpen &&
-                !this.panelEl.contains(e.target) &&
-                !this.triggerEl.contains(e.target)) {
-                this.closePanel();
-            }
-        });
+        
+        // Click outside to close (DISABLED - uncomment to re-enable)
+        // document.addEventListener('click', (e) => {
+        //     if (this.isOpen && 
+        //         !this.panelEl.contains(e.target) && 
+        //         !this.triggerEl.contains(e.target)) {
+        //         this.closePanel();
+        //     }
+        // });
     }
 
     togglePanel() {
@@ -405,10 +405,10 @@ class AirtablePanel {
             this.showEmpty();
             return;
         }
-        
+
         const listHTML = this.filteredRecords.map(record => {
             const fields = record.fields;
-            
+
             // Use actual field names from your Airtable
             const foreclosure = fields['Foreclosure'] || '';
             const auction = fields['Auction'] || '';
@@ -420,13 +420,13 @@ class AirtablePanel {
             const estMarketValue = fields['Est Market Value'] || '';
             const salePrice = fields['Sale Price'] || '';
             const foreclosureURL = fields['Foreclosure URL'] || '';
-            
+
             // Extract first and last names from existing fields (if they exist)
             // You might have owner name fields - checking common variations
             const ownerField = fields['Owner'] || fields['Owner Name'] || fields['Property Owner'] || '';
             let firstName = '';
             let lastName = '';
-            
+
             if (ownerField) {
                 const nameParts = ownerField.split(' ');
                 if (nameParts.length >= 2) {
@@ -434,11 +434,11 @@ class AirtablePanel {
                     lastName = nameParts.slice(1).join(' ');
                 }
             }
-            
+
             // Create formatted name combinations
             const firstLast = firstName && lastName ? `${firstName} ${lastName}` : '';
             const lastFirst = firstName && lastName ? `${lastName}, ${firstName}` : '';
-            
+
             // Use Foreclosure as the display name, fallback to location, then other meaningful fields
             let displayName = foreclosure;
             if (!displayName) displayName = location;
@@ -479,7 +479,7 @@ class AirtablePanel {
         }
     }
 
-    
+
 
     async copyRecordToClipboard(record, element) {
         const fields = record.fields;
@@ -539,26 +539,26 @@ class AirtablePanel {
 }
 
 // Global function for copying field data (needed for onclick handlers)
-window.copyFieldData = async function(event, fieldValue) {
+window.copyFieldData = async function (event, fieldValue) {
     event.stopPropagation();
-    
+
     try {
         await navigator.clipboard.writeText(fieldValue);
-        
+
         const element = event.target;
         const originalBg = element.style.backgroundColor;
         const originalText = element.innerHTML;
-        
+
         element.style.backgroundColor = '#e8f5e8';
         element.innerHTML = `${fieldValue} ✓`;
-        
+
         setTimeout(() => {
             element.style.backgroundColor = originalBg;
             element.innerHTML = originalText;
         }, 1500);
-        
+
         console.log('SearchIQS Cleaner: Copied field data to clipboard:', fieldValue);
-        
+
     } catch (error) {
         console.error('SearchIQS Cleaner: Failed to copy field data:', error);
     }
