@@ -437,7 +437,7 @@ class AirtablePanel {
 
             // Create formatted name combinations you requested
             const firstLast = firstName && lastName ? `${firstName} ${lastName}` : '';
-            const lastFirst = firstName && lastName ? `${lastName}, ${firstName}` : '';
+            const lastFirst = firstName && lastName ? `${lastName} ${firstName}` : '';
 
             // Use Foreclosure as the display name, fallback to names, then other meaningful fields
             let displayName = foreclosure;
@@ -459,7 +459,7 @@ class AirtablePanel {
                         ${firstName ? `<div style="margin: 2px 0;"><strong>First:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(firstName)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstName)}</span></div>` : ''}
                         ${lastName ? `<div style="margin: 2px 0;"><strong>Last:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(lastName)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lastName)}</span></div>` : ''}
                         ${firstLast ? `<div style="margin: 2px 0;"><strong>First Last:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(firstLast)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstLast)}</span></div>` : ''}
-                        ${lastFirst ? `<div style="margin: 2px 0;"><strong>Last, First:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(lastFirst)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lastFirst)}</span></div>` : ''}
+                        ${lastFirst ? `<div style="margin: 2px 0;"><strong>Last First:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(lastFirst)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lastFirst)}</span></div>` : ''}
                         ${sbl ? `<div style="margin: 2px 0;"><strong>SBL:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(sbl)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(sbl)}</span></div>` : ''}
                         ${county ? `<div style="margin: 2px 0;"><strong>County:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(county)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(county)}</span></div>` : ''}
                         ${city ? `<div style="margin: 2px 0;"><strong>City:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(city)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(city)}</span></div>` : ''}
@@ -471,15 +471,15 @@ class AirtablePanel {
         }).join('');
 
         this.contentEl.innerHTML = `<ul style="padding: 0; margin: 0; list-style: none;">${listHTML}</ul>`;
-        
+
         // Add event delegation for copy functionality
         this.setupCopyEventListeners();
     }
-    
+
     setupCopyEventListeners() {
         // Remove existing listeners to avoid duplicates
         this.contentEl.removeEventListener('click', this.copyClickHandler);
-        
+
         // Create bound handler
         this.copyClickHandler = (event) => {
             if (event.target.classList.contains('copy-field')) {
@@ -489,31 +489,31 @@ class AirtablePanel {
                 }
             }
         };
-        
+
         // Add new listener
         this.contentEl.addEventListener('click', this.copyClickHandler);
     }
-    
+
     handleFieldCopy(event, fieldValue) {
         event.stopPropagation();
-        
+
         console.log('SearchIQS Cleaner: Copying field data:', fieldValue);
-        
+
         navigator.clipboard.writeText(fieldValue).then(() => {
             const element = event.target;
             const originalBg = element.style.backgroundColor;
             const originalText = element.innerHTML;
-            
+
             element.style.backgroundColor = '#e8f5e8';
             element.innerHTML = `${fieldValue} ✓`;
-            
+
             setTimeout(() => {
                 element.style.backgroundColor = originalBg;
                 element.innerHTML = originalText;
             }, 1500);
-            
+
             console.log('SearchIQS Cleaner: Successfully copied to clipboard:', fieldValue);
-            
+
         }).catch(error => {
             console.error('SearchIQS Cleaner: Failed to copy field data:', error);
         });
