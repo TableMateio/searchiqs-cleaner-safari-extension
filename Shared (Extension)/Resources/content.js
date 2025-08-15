@@ -14,7 +14,7 @@ const AIRTABLE_CONFIG = {
     BASE_URL: 'https://api.airtable.com/v0',
     FIELDS: [
         'Last (From Owner)',
-        'First (From Owner)', 
+        'First (From Owner)',
         'Company Name',
         'SBL',
         'County',
@@ -126,53 +126,351 @@ function enableRightClick() {
     console.log('SearchIQS Cleaner: Right-click protection enabled');
 }
 
-// Function to create the Airtable panel trigger button
-function createAirtableTrigger() {
-    console.log('SearchIQS Cleaner: Creating Airtable trigger button...');
+// ===== AIRTABLE PANEL CLASS =====
+class AirtablePanel {
+    constructor() {
+        this.isOpen = false;
+        this.records = [];
+        this.filteredRecords = [];
+        this.currentView = AIRTABLE_CONFIG.DEFAULT_VIEW_ID;
+        this.views = [];
+        this.isLoading = false;
+        
+        this.init();
+    }
     
-    const trigger = document.createElement('div');
-    trigger.id = 'airtable-panel-trigger';
-    trigger.innerHTML = '📋';
-    trigger.title = 'Open Airtable Panel';
-    trigger.style.cssText = `
-        position: fixed !important;
-        top: 10px !important;
-        left: 10px !important;
-        width: 40px !important;
-        height: 40px !important;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        border-radius: 8px !important;
-        cursor: pointer !important;
-        z-index: 999999 !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        color: white !important;
-        font-size: 18px !important;
-        font-weight: 600 !important;
-        user-select: none !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    `;
+    init() {
+        this.createPanelHTML();
+        this.attachEventListeners();
+        this.loadViews();
+        this.loadRecords();
+    }
     
-    trigger.addEventListener('click', () => {
-        alert('Airtable panel clicked! This confirms the trigger button is working. Full panel coming next...');
-        console.log('SearchIQS Cleaner: Trigger button clicked successfully!');
-    });
+    createPanelHTML() {
+        // Create trigger button
+        const trigger = document.createElement('div');
+        trigger.id = 'airtable-panel-trigger';
+        trigger.innerHTML = '📋';
+        trigger.title = 'Open Airtable Panel';
+        trigger.style.cssText = `
+            position: fixed !important;
+            top: 10px !important;
+            left: 10px !important;
+            width: 40px !important;
+            height: 40px !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            border-radius: 8px !important;
+            cursor: pointer !important;
+            z-index: 999999 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            color: white !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            user-select: none !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        `;
+        document.body.appendChild(trigger);
+        
+        // Create side panel
+        const panel = document.createElement('div');
+        panel.id = 'airtable-panel';
+        panel.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: -350px !important;
+            width: 350px !important;
+            height: 100vh !important;
+            background: #ffffff !important;
+            border-right: 1px solid #e1e5e9 !important;
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.08) !important;
+            z-index: 999998 !important;
+            transition: left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        `;
+        
+        panel.innerHTML = `
+            <div style="padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-bottom: 1px solid #e1e5e9;">
+                <button id="panel-close" style="position: absolute; top: 15px; right: 15px; background: rgba(255, 255, 255, 0.2); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px;">×</button>
+                <h2 style="font-size: 18px; font-weight: 600; margin: 0 0 10px 0;">Tax Surplus Records</h2>
+                <p style="font-size: 14px; opacity: 0.9; margin: 0;">Click any record to copy to clipboard</p>
+            </div>
+            
+            <div style="padding: 20px; border-bottom: 1px solid #f0f0f0;">
+                <div style="position: relative; margin-bottom: 15px;">
+                    <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999; font-size: 16px;">🔍</span>
+                    <input type="text" id="record-search" placeholder="Search records..." style="width: 100%; padding: 12px 16px 12px 40px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                </div>
+                
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">View:</label>
+                    <select id="view-dropdown" style="width: 100%; padding: 10px 12px; border: 2px solid #e1e5e9; border-radius: 6px; font-size: 14px; background: white; box-sizing: border-box;">
+                        <option value="${AIRTABLE_CONFIG.DEFAULT_VIEW_ID}">Focus (Default)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="panel-content" style="flex: 1; overflow-y: auto; padding: 0;">
+                <div style="padding: 40px 20px; text-align: center; color: #666;">Loading records...</div>
+            </div>
+        `;
+        
+        document.body.appendChild(panel);
+        
+        this.triggerEl = trigger;
+        this.panelEl = panel;
+        this.contentEl = panel.querySelector('#panel-content');
+        this.searchEl = panel.querySelector('#record-search');
+        this.viewDropdownEl = panel.querySelector('#view-dropdown');
+    }
     
-    trigger.addEventListener('mouseenter', () => {
-        trigger.style.transform = 'translateY(-2px)';
-        trigger.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.2)';
-    });
+    attachEventListeners() {
+        // Trigger button click
+        this.triggerEl.addEventListener('click', () => this.togglePanel());
+        
+        // Hover effects for trigger
+        this.triggerEl.addEventListener('mouseenter', () => {
+            this.triggerEl.style.transform = 'translateY(-2px)';
+            this.triggerEl.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.2)';
+        });
+        
+        this.triggerEl.addEventListener('mouseleave', () => {
+            this.triggerEl.style.transform = 'translateY(0)';
+            this.triggerEl.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+        });
+        
+        // Close button click
+        this.panelEl.querySelector('#panel-close').addEventListener('click', () => this.closePanel());
+        
+        // Search input
+        this.searchEl.addEventListener('input', (e) => this.handleSearch(e.target.value));
+        
+        // View dropdown change
+        this.viewDropdownEl.addEventListener('change', (e) => this.handleViewChange(e.target.value));
+        
+        // Click outside to close
+        document.addEventListener('click', (e) => {
+            if (this.isOpen && 
+                !this.panelEl.contains(e.target) && 
+                !this.triggerEl.contains(e.target)) {
+                this.closePanel();
+            }
+        });
+    }
     
-    trigger.addEventListener('mouseleave', () => {
-        trigger.style.transform = 'translateY(0)';
-        trigger.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-    });
+    togglePanel() {
+        if (this.isOpen) {
+            this.closePanel();
+        } else {
+            this.openPanel();
+        }
+    }
     
-    document.body.appendChild(trigger);
-    console.log('SearchIQS Cleaner: ✅ Airtable trigger button created and added to page!');
+    openPanel() {
+        this.isOpen = true;
+        this.panelEl.style.left = '0';
+        this.triggerEl.style.display = 'none';
+        console.log('SearchIQS Cleaner: Airtable panel opened');
+    }
+    
+    closePanel() {
+        this.isOpen = false;
+        this.panelEl.style.left = '-350px';
+        this.triggerEl.style.display = 'flex';
+        console.log('SearchIQS Cleaner: Airtable panel closed');
+    }
+    
+    async loadViews() {
+        // For now, just use the default view
+        console.log('SearchIQS Cleaner: Using default view configuration');
+    }
+    
+    async loadRecords() {
+        if (this.isLoading) return;
+        
+        this.isLoading = true;
+        this.showLoading();
+        
+        try {
+            const url = new URL(`${AIRTABLE_CONFIG.BASE_URL}/${AIRTABLE_CONFIG.BASE_ID}/${AIRTABLE_CONFIG.TABLE_ID}`);
+            url.searchParams.append('view', this.currentView);
+            
+            // Only request the fields we need
+            AIRTABLE_CONFIG.FIELDS.forEach(field => {
+                url.searchParams.append('fields[]', field);
+            });
+            
+            console.log('SearchIQS Cleaner: Fetching records from:', url.toString());
+            
+            const response = await fetch(url.toString(), {
+                headers: {
+                    'Authorization': `Bearer ${AIRTABLE_CONFIG.API_TOKEN}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            this.records = data.records || [];
+            this.filteredRecords = [...this.records];
+            this.renderRecords();
+            
+            console.log(`SearchIQS Cleaner: Loaded ${this.records.length} records from Airtable`);
+            
+        } catch (error) {
+            console.error('SearchIQS Cleaner: Error loading records:', error);
+            this.showError(`Failed to load records: ${error.message}`);
+        } finally {
+            this.isLoading = false;
+        }
+    }
+    
+    handleSearch(query) {
+        const searchTerm = query.toLowerCase().trim();
+        
+        if (!searchTerm) {
+            this.filteredRecords = [...this.records];
+        } else {
+            this.filteredRecords = this.records.filter(record => {
+                const fields = record.fields;
+                return AIRTABLE_CONFIG.FIELDS.some(fieldName => {
+                    const value = fields[fieldName];
+                    return value && value.toString().toLowerCase().includes(searchTerm);
+                });
+            });
+        }
+        
+        this.renderRecords();
+    }
+    
+    handleViewChange(viewId) {
+        if (viewId !== this.currentView) {
+            this.currentView = viewId;
+            this.loadRecords();
+            console.log('SearchIQS Cleaner: Changed to view:', viewId);
+        }
+    }
+    
+    renderRecords() {
+        if (this.filteredRecords.length === 0) {
+            this.showEmpty();
+            return;
+        }
+        
+        const listHTML = this.filteredRecords.map(record => {
+            const fields = record.fields;
+            const lastName = fields['Last (From Owner)'] || '';
+            const firstName = fields['First (From Owner)'] || '';
+            const company = fields['Company Name'] || '';
+            const sbl = fields['SBL'] || '';
+            const county = fields['County'] || '';
+            const city = fields['City'] || '';
+            const firstLineAddress = fields['First Line Address'] || '';
+            const fullAddress = fields['Full Address'] || '';
+            
+            const displayName = [firstName, lastName].filter(n => n).join(' ') || 'Unnamed Record';
+            
+            return `
+                <li style="padding: 16px 20px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background-color 0.2s; position: relative; list-style: none;" 
+                    data-record-id="${record.id}"
+                    onmouseover="this.style.backgroundColor='#f8f9fb'"
+                    onmouseout="this.style.backgroundColor=''"
+                    onclick="window.airtablePanel.handleRecordClick(this)">
+                    <div style="font-size: 16px; font-weight: 600; color: #2c3e50; margin: 0 0 8px 0;">${this.escapeHtml(displayName)}</div>
+                    ${company ? `<div style="font-size: 14px; color: #667eea; margin: 0 0 8px 0; font-weight: 500;">${this.escapeHtml(company)}</div>` : ''}
+                    <div style="font-size: 13px; color: #666; line-height: 1.4;">
+                        ${sbl ? `<div style="margin: 2px 0;"><strong>SBL:</strong> ${this.escapeHtml(sbl)}</div>` : ''}
+                        ${county ? `<div style="margin: 2px 0;"><strong>County:</strong> ${this.escapeHtml(county)}</div>` : ''}
+                        ${city ? `<div style="margin: 2px 0;"><strong>City:</strong> ${this.escapeHtml(city)}</div>` : ''}
+                        ${firstLineAddress ? `<div style="margin: 2px 0;"><strong>Address:</strong> ${this.escapeHtml(firstLineAddress)}</div>` : ''}
+                        ${fullAddress && fullAddress !== firstLineAddress ? `<div style="margin: 2px 0;"><strong>Full Address:</strong> ${this.escapeHtml(fullAddress)}</div>` : ''}
+                    </div>
+                </li>
+            `;
+        }).join('');
+        
+        this.contentEl.innerHTML = `<ul style="padding: 0; margin: 0; list-style: none;">${listHTML}</ul>`;
+    }
+    
+    handleRecordClick(recordElement) {
+        const recordId = recordElement.dataset.recordId;
+        const record = this.records.find(r => r.id === recordId);
+        
+        if (record) {
+            this.copyRecordToClipboard(record, recordElement);
+        }
+    }
+    
+    async copyRecordToClipboard(record, element) {
+        const fields = record.fields;
+        
+        // Format the record data for clipboard
+        const recordText = [
+            fields['Last (From Owner)'] || '',
+            fields['First (From Owner)'] || '',
+            fields['Company Name'] || '',
+            fields['SBL'] || '',
+            fields['County'] || '',
+            fields['City'] || '',
+            fields['First Line Address'] || '',
+            fields['Full Address'] || ''
+        ].filter(value => value).join(' | ');
+        
+        try {
+            await navigator.clipboard.writeText(recordText);
+            
+            // Visual feedback
+            element.style.backgroundColor = '#e8f5e8';
+            element.innerHTML += '<span style="position: absolute; top: 50%; right: 20px; transform: translateY(-50%); color: #4caf50; font-size: 12px; font-weight: 600;">✓ Copied!</span>';
+            
+            setTimeout(() => {
+                element.style.backgroundColor = '';
+                const copyIndicator = element.querySelector('span[style*="Copied"]');
+                if (copyIndicator) copyIndicator.remove();
+            }, 2000);
+            
+            console.log('SearchIQS Cleaner: Copied record to clipboard:', recordText);
+            
+        } catch (error) {
+            console.error('SearchIQS Cleaner: Failed to copy to clipboard:', error);
+        }
+    }
+    
+    showLoading() {
+        this.contentEl.innerHTML = '<div style="padding: 40px 20px; text-align: center; color: #666;">Loading records...</div>';
+    }
+    
+    showError(message) {
+        this.contentEl.innerHTML = `<div style="padding: 20px; color: #e74c3c; text-align: center; font-size: 14px;">${this.escapeHtml(message)}</div>`;
+    }
+    
+    showEmpty() {
+        const message = this.searchEl.value.trim() ? 
+            'No records found matching your search.' : 
+            'No records available.';
+        this.contentEl.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: #999; font-size: 14px;">${message}</div>`;
+    }
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+}
+
+// Function to create the Airtable panel
+function createAirtablePanel() {
+    console.log('SearchIQS Cleaner: Creating full Airtable panel...');
+    window.airtablePanel = new AirtablePanel();
+    console.log('SearchIQS Cleaner: ✅ Full Airtable panel created and initialized!');
 }
 
 // Function to check for and remove elements immediately
@@ -181,7 +479,7 @@ function initialCleanup() {
     removeUnwantedElements();
     modifyParty2NameInput();
     enableRightClick();
-    createAirtableTrigger();
+    createAirtablePanel();
 }
 
 // Function to set up MutationObserver for dynamically added elements
