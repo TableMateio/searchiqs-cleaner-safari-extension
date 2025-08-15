@@ -296,52 +296,37 @@ class AirtablePanel {
 
         this.isLoading = true;
         this.showLoading();
-
+        
         try {
             const baseUrl = `${AIRTABLE_CONFIG.BASE_URL}/${AIRTABLE_CONFIG.BASE_ID}/${AIRTABLE_CONFIG.TABLE_ID}`;
             console.log('SearchIQS Cleaner: Loading records from Focus view...');
-
-            // First try: Get records without field filtering to see what fields are available
+            
+            // Build URL with view parameter to get only Focus view records
             let url = new URL(baseUrl);
             url.searchParams.append('view', this.currentView);
-            url.searchParams.append('maxRecords', '100'); // Get more records
-
-            console.log('SearchIQS Cleaner: Fetching all fields first to identify available ones...');
-
+            url.searchParams.append('maxRecords', '100'); // Get more records from the view
+            
+            console.log('SearchIQS Cleaner: Fetching from Focus view:', url.toString());
+            
             const response = await fetch(url.toString(), {
                 headers: {
                     'Authorization': `Bearer ${AIRTABLE_CONFIG.API_TOKEN}`,
                     'Content-Type': 'application/json'
                 }
             });
-
+            
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('SearchIQS Cleaner: Error response:', errorText);
-
-                // Try without view if view fails
-                if (response.status === 422 && errorText.includes('view')) {
-                    console.log('SearchIQS Cleaner: View failed, trying without view...');
-                    const fallbackUrl = new URL(baseUrl);
-                    fallbackUrl.searchParams.append('maxRecords', '100');
-
-                    const fallbackResponse = await fetch(fallbackUrl.toString(), {
-                        headers: {
-                            'Authorization': `Bearer ${AIRTABLE_CONFIG.API_TOKEN}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (fallbackResponse.ok) {
-                        const fallbackData = await fallbackResponse.json();
-                        this.handleSuccessfulResponse(fallbackData);
-                        return;
-                    }
+                
+                // If the view ID is wrong, don't fall back to all records - show error instead
+                if (response.status === 422) {
+                    throw new Error(`View access failed. The Focus view (${this.currentView}) may not exist or may not be accessible. Please check the view ID in config.`);
                 }
-
+                
                 throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
             }
-
+            
             const data = await response.json();
             this.handleSuccessfulResponse(data);
 
@@ -405,10 +390,10 @@ class AirtablePanel {
             this.showEmpty();
             return;
         }
-        
+
         const listHTML = this.filteredRecords.map(record => {
             const fields = record.fields;
-            
+
             // Use the original fields you wanted, checking available field names from your Airtable
             const foreclosure = fields['Foreclosure'] || '';
             const lastName = fields['Last (From Owner)'] || fields['Last (from Owner)'] || '';
@@ -419,11 +404,11 @@ class AirtablePanel {
             const city = fields['City'] || '';
             const firstLineAddress = fields['First Line Address'] || fields['Address'] || fields['Location'] || '';
             const fullAddress = fields['Full Address'] || fields['Complete Address'] || '';
-            
+
             // Create formatted name combinations you requested
             const firstLast = firstName && lastName ? `${firstName} ${lastName}` : '';
             const lastFirst = firstName && lastName ? `${lastName}, ${firstName}` : '';
-            
+
             // Use Foreclosure as the display name, fallback to names, then other meaningful fields
             let displayName = foreclosure;
             if (!displayName && (firstName || lastName)) {
