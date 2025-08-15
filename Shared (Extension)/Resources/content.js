@@ -8,24 +8,24 @@ console.log('SearchIQS Cleaner: Content script loaded v2.5 - FIELD COPYING FIXED
 // ===== GLOBAL COPY FUNCTION (must be first) =====
 function copyFieldData(event, fieldValue) {
     event.stopPropagation();
-    
+
     console.log('SearchIQS Cleaner: copyFieldData called with:', fieldValue);
-    
+
     navigator.clipboard.writeText(fieldValue).then(() => {
         const element = event.target;
         const originalBg = element.style.backgroundColor;
         const originalText = element.innerHTML;
-        
+
         element.style.backgroundColor = '#e8f5e8';
         element.innerHTML = `${fieldValue} ✓`;
-        
+
         setTimeout(() => {
             element.style.backgroundColor = originalBg;
             element.innerHTML = originalText;
         }, 1500);
-        
+
         console.log('SearchIQS Cleaner: Successfully copied to clipboard:', fieldValue);
-        
+
     }).catch(error => {
         console.error('SearchIQS Cleaner: Failed to copy field data:', error);
     });
@@ -453,24 +453,70 @@ class AirtablePanel {
                     data-record-id="${record.id}"
                     onmouseover="this.style.backgroundColor='#f8f9fb'"
                     onmouseout="this.style.backgroundColor=''">
-                    <div style="font-size: 16px; font-weight: 600; color: #2c3e50; margin: 0 0 8px 0; cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onclick="copyFieldData(event, '${this.escapeHtml(displayName)}')" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(displayName)}</div>
-                    ${company ? `<div style="font-size: 14px; color: #667eea; margin: 0 0 8px 0; font-weight: 500; cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onclick="copyFieldData(event, '${this.escapeHtml(company)}')" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(company)}</div>` : ''}
+                    <div class="copy-field" data-copy-value="${this.escapeHtml(displayName)}" style="font-size: 16px; font-weight: 600; color: #2c3e50; margin: 0 0 8px 0; cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(displayName)}</div>
+                    ${company ? `<div style="font-size: 14px; color: #667eea; margin: 0 0 8px 0; font-weight: 500; cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" class="copy-field" data-copy-value="${this.escapeHtml(company)}" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(company)}</div>` : ''}
                     <div style="font-size: 13px; color: #666; line-height: 1.4;">
-                        ${firstName ? `<div style="margin: 2px 0;"><strong>First:</strong> <span class="field-data" onclick="copyFieldData(event, '${this.escapeHtml(firstName)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstName)}</span></div>` : ''}
-                        ${lastName ? `<div style="margin: 2px 0;"><strong>Last:</strong> <span class="field-data" onclick="copyFieldData(event, '${this.escapeHtml(lastName)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lastName)}</span></div>` : ''}
-                        ${firstLast ? `<div style="margin: 2px 0;"><strong>First Last:</strong> <span class="field-data" onclick="copyFieldData(event, '${this.escapeHtml(firstLast)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstLast)}</span></div>` : ''}
-                        ${lastFirst ? `<div style="margin: 2px 0;"><strong>Last, First:</strong> <span class="field-data" onclick="copyFieldData(event, '${this.escapeHtml(lastFirst)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lastFirst)}</span></div>` : ''}
-                        ${sbl ? `<div style="margin: 2px 0;"><strong>SBL:</strong> <span class="field-data" onclick="copyFieldData(event, '${this.escapeHtml(sbl)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(sbl)}</span></div>` : ''}
-                        ${county ? `<div style="margin: 2px 0;"><strong>County:</strong> <span class="field-data" onclick="copyFieldData(event, '${this.escapeHtml(county)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(county)}</span></div>` : ''}
-                        ${city ? `<div style="margin: 2px 0;"><strong>City:</strong> <span class="field-data" onclick="copyFieldData(event, '${this.escapeHtml(city)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(city)}</span></div>` : ''}
-                        ${firstLineAddress ? `<div style="margin: 2px 0;"><strong>Address:</strong> <span class="field-data" onclick="copyFieldData(event, '${this.escapeHtml(firstLineAddress)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstLineAddress)}</span></div>` : ''}
-                        ${fullAddress && fullAddress !== firstLineAddress ? `<div style="margin: 2px 0;"><strong>Full Address:</strong> <span class="field-data" onclick="copyFieldData(event, '${this.escapeHtml(fullAddress)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(fullAddress)}</span></div>` : ''}
+                        ${firstName ? `<div style="margin: 2px 0;"><strong>First:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(firstName)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstName)}</span></div>` : ''}
+                        ${lastName ? `<div style="margin: 2px 0;"><strong>Last:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(lastName)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lastName)}</span></div>` : ''}
+                        ${firstLast ? `<div style="margin: 2px 0;"><strong>First Last:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(firstLast)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstLast)}</span></div>` : ''}
+                        ${lastFirst ? `<div style="margin: 2px 0;"><strong>Last, First:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(lastFirst)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lastFirst)}</span></div>` : ''}
+                        ${sbl ? `<div style="margin: 2px 0;"><strong>SBL:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(sbl)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(sbl)}</span></div>` : ''}
+                        ${county ? `<div style="margin: 2px 0;"><strong>County:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(county)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(county)}</span></div>` : ''}
+                        ${city ? `<div style="margin: 2px 0;"><strong>City:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(city)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(city)}</span></div>` : ''}
+                        ${firstLineAddress ? `<div style="margin: 2px 0;"><strong>Address:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(firstLineAddress)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstLineAddress)}</span></div>` : ''}
+                        ${fullAddress && fullAddress !== firstLineAddress ? `<div style="margin: 2px 0;"><strong>Full Address:</strong> <span class="field-data copy-field" data-copy-value="${this.escapeHtml(fullAddress)}" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(fullAddress)}</span></div>` : ''}
                     </div>
                 </li>
             `;
         }).join('');
 
         this.contentEl.innerHTML = `<ul style="padding: 0; margin: 0; list-style: none;">${listHTML}</ul>`;
+        
+        // Add event delegation for copy functionality
+        this.setupCopyEventListeners();
+    }
+    
+    setupCopyEventListeners() {
+        // Remove existing listeners to avoid duplicates
+        this.contentEl.removeEventListener('click', this.copyClickHandler);
+        
+        // Create bound handler
+        this.copyClickHandler = (event) => {
+            if (event.target.classList.contains('copy-field')) {
+                const fieldValue = event.target.getAttribute('data-copy-value');
+                if (fieldValue) {
+                    this.handleFieldCopy(event, fieldValue);
+                }
+            }
+        };
+        
+        // Add new listener
+        this.contentEl.addEventListener('click', this.copyClickHandler);
+    }
+    
+    handleFieldCopy(event, fieldValue) {
+        event.stopPropagation();
+        
+        console.log('SearchIQS Cleaner: Copying field data:', fieldValue);
+        
+        navigator.clipboard.writeText(fieldValue).then(() => {
+            const element = event.target;
+            const originalBg = element.style.backgroundColor;
+            const originalText = element.innerHTML;
+            
+            element.style.backgroundColor = '#e8f5e8';
+            element.innerHTML = `${fieldValue} ✓`;
+            
+            setTimeout(() => {
+                element.style.backgroundColor = originalBg;
+                element.innerHTML = originalText;
+            }, 1500);
+            
+            console.log('SearchIQS Cleaner: Successfully copied to clipboard:', fieldValue);
+            
+        }).catch(error => {
+            console.error('SearchIQS Cleaner: Failed to copy field data:', error);
+        });
     }
 
     handleRecordClick(recordElement) {
