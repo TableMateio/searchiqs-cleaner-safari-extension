@@ -405,45 +405,32 @@ class AirtablePanel {
             this.showEmpty();
             return;
         }
-
+        
         const listHTML = this.filteredRecords.map(record => {
             const fields = record.fields;
-
-            // Use actual field names from your Airtable
+            
+            // Use the original fields you wanted, checking available field names from your Airtable
             const foreclosure = fields['Foreclosure'] || '';
-            const auction = fields['Auction'] || '';
-            const number = fields['Number'] || '';
-            const location = fields['Location'] || '';
-            const city = fields['City'] || '';
+            const lastName = fields['Last (From Owner)'] || fields['Last (from Owner)'] || '';
+            const firstName = fields['First (From Owner)'] || fields['First (from Owner)'] || '';
+            const company = fields['Company Name'] || fields['Company'] || '';
             const sbl = fields['SBL'] || '';
-            const lotSize = fields['Lot Size'] || '';
-            const estMarketValue = fields['Est Market Value'] || '';
-            const salePrice = fields['Sale Price'] || '';
-            const foreclosureURL = fields['Foreclosure URL'] || '';
-
-            // Extract first and last names from existing fields (if they exist)
-            // You might have owner name fields - checking common variations
-            const ownerField = fields['Owner'] || fields['Owner Name'] || fields['Property Owner'] || '';
-            let firstName = '';
-            let lastName = '';
-
-            if (ownerField) {
-                const nameParts = ownerField.split(' ');
-                if (nameParts.length >= 2) {
-                    firstName = nameParts[0];
-                    lastName = nameParts.slice(1).join(' ');
-                }
-            }
-
-            // Create formatted name combinations
+            const county = fields['County'] || '';
+            const city = fields['City'] || '';
+            const firstLineAddress = fields['First Line Address'] || fields['Address'] || fields['Location'] || '';
+            const fullAddress = fields['Full Address'] || fields['Complete Address'] || '';
+            
+            // Create formatted name combinations you requested
             const firstLast = firstName && lastName ? `${firstName} ${lastName}` : '';
             const lastFirst = firstName && lastName ? `${lastName}, ${firstName}` : '';
-
-            // Use Foreclosure as the display name, fallback to location, then other meaningful fields
+            
+            // Use Foreclosure as the display name, fallback to names, then other meaningful fields
             let displayName = foreclosure;
-            if (!displayName) displayName = location;
+            if (!displayName && (firstName || lastName)) {
+                displayName = [firstName, lastName].filter(n => n).join(' ');
+            }
+            if (!displayName) displayName = firstLineAddress;
             if (!displayName) displayName = `${city} - ${sbl}`;
-            if (!displayName) displayName = `Property ${number}`;
             if (!displayName) displayName = 'Record ' + record.id.substring(0, 8);
 
             return `
@@ -452,16 +439,17 @@ class AirtablePanel {
                     onmouseover="this.style.backgroundColor='#f8f9fb'"
                     onmouseout="this.style.backgroundColor=''">
                     <div style="font-size: 16px; font-weight: 600; color: #2c3e50; margin: 0 0 8px 0; cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onclick="window.copyFieldData(event, '${this.escapeHtml(displayName)}')" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(displayName)}</div>
+                    ${company ? `<div style="font-size: 14px; color: #667eea; margin: 0 0 8px 0; font-weight: 500; cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onclick="window.copyFieldData(event, '${this.escapeHtml(company)}')" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(company)}</div>` : ''}
                     <div style="font-size: 13px; color: #666; line-height: 1.4;">
+                        ${firstName ? `<div style="margin: 2px 0;"><strong>First:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(firstName)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstName)}</span></div>` : ''}
+                        ${lastName ? `<div style="margin: 2px 0;"><strong>Last:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(lastName)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lastName)}</span></div>` : ''}
                         ${firstLast ? `<div style="margin: 2px 0;"><strong>First Last:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(firstLast)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstLast)}</span></div>` : ''}
                         ${lastFirst ? `<div style="margin: 2px 0;"><strong>Last, First:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(lastFirst)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lastFirst)}</span></div>` : ''}
                         ${sbl ? `<div style="margin: 2px 0;"><strong>SBL:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(sbl)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(sbl)}</span></div>` : ''}
+                        ${county ? `<div style="margin: 2px 0;"><strong>County:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(county)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(county)}</span></div>` : ''}
                         ${city ? `<div style="margin: 2px 0;"><strong>City:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(city)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(city)}</span></div>` : ''}
-                        ${location ? `<div style="margin: 2px 0;"><strong>Location:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(location)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(location)}</span></div>` : ''}
-                        ${auction ? `<div style="margin: 2px 0;"><strong>Auction:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(auction)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(auction)}</span></div>` : ''}
-                        ${estMarketValue ? `<div style="margin: 2px 0;"><strong>Est Market Value:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(estMarketValue)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(estMarketValue)}</span></div>` : ''}
-                        ${salePrice ? `<div style="margin: 2px 0;"><strong>Sale Price:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(salePrice)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(salePrice)}</span></div>` : ''}
-                        ${lotSize ? `<div style="margin: 2px 0;"><strong>Lot Size:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(lotSize)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lotSize)}</span></div>` : ''}
+                        ${firstLineAddress ? `<div style="margin: 2px 0;"><strong>Address:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(firstLineAddress)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstLineAddress)}</span></div>` : ''}
+                        ${fullAddress && fullAddress !== firstLineAddress ? `<div style="margin: 2px 0;"><strong>Full Address:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(fullAddress)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(fullAddress)}</span></div>` : ''}
                     </div>
                 </li>
             `;
