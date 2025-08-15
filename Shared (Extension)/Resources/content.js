@@ -3,7 +3,7 @@
 // Also restores normal right-click functionality
 // Provides Airtable integration panel for tax surplus records
 
-console.log('SearchIQS Cleaner: Content script loaded v2.0 - WITH AIRTABLE PANEL');
+console.log('SearchIQS Cleaner: Content script loaded v2.5 - FIELD COPYING FIXED + AUTO-CLOSE DISABLED');
 
 // ===== AIRTABLE CONFIGURATION =====
 const AIRTABLE_CONFIG = {
@@ -24,7 +24,7 @@ const AIRTABLE_CONFIG = {
         'Full Address'
     ]
 };
-console.log('SearchIQS Cleaner: Airtable config embedded in content script');
+console.log('SearchIQS Cleaner: Airtable config embedded in content script v2.5');
 
 // Function to remove unwanted elements
 function removeUnwantedElements() {
@@ -253,7 +253,7 @@ class AirtablePanel {
 
         // View dropdown change
         this.viewDropdownEl.addEventListener('change', (e) => this.handleViewChange(e.target.value));
-        
+
         // Click outside to close (DISABLED - uncomment to re-enable)
         // document.addEventListener('click', (e) => {
         //     if (this.isOpen && 
@@ -568,7 +568,7 @@ window.copyFieldData = async function (event, fieldValue) {
 function createAirtablePanel() {
     console.log('SearchIQS Cleaner: Creating full Airtable panel...');
     window.airtablePanel = new AirtablePanel();
-    console.log('SearchIQS Cleaner: ✅ Full Airtable panel created and initialized!');
+    console.log('SearchIQS Cleaner: ✅ v2.5 Airtable panel created - Field copying fixed!');
 }
 
 // Function to check for and remove elements immediately
@@ -615,8 +615,8 @@ function setupMutationObserver() {
 
 // Main execution
 function init() {
-    console.log('SearchIQS Cleaner: Initializing v2.0 WITH AIRTABLE PANEL on', window.location.href);
-    console.log('SearchIQS Cleaner: 🚀 NEW VERSION - EXPECT AIRTABLE PANEL TRIGGER BUTTON!');
+    console.log('SearchIQS Cleaner: Initializing v2.5 WITH FIXED FIELD COPYING on', window.location.href);
+    console.log('SearchIQS Cleaner: 🚀 v2.5 - FIELD COPYING WORKS + NO AUTO-CLOSE!');
 
     // Perform initial cleanup
     initialCleanup();
