@@ -15,7 +15,7 @@ const AIRTABLE_CONFIG = {
     FIELDS: [
         'Foreclosure',  // Use this as the record name
         'Last (From Owner)',
-        'First (From Owner)', 
+        'First (From Owner)',
         'Company Name',
         'SBL',
         'County',
@@ -301,16 +301,12 @@ class AirtablePanel {
             const baseUrl = `${AIRTABLE_CONFIG.BASE_URL}/${AIRTABLE_CONFIG.BASE_ID}/${AIRTABLE_CONFIG.TABLE_ID}`;
             console.log('SearchIQS Cleaner: Loading records from Focus view...');
             
-            // Build URL with view and field parameters
-            const url = new URL(baseUrl);
+            // First try: Get records without field filtering to see what fields are available
+            let url = new URL(baseUrl);
             url.searchParams.append('view', this.currentView);
+            url.searchParams.append('maxRecords', '100'); // Get more records
             
-            // Add field filters
-            AIRTABLE_CONFIG.FIELDS.forEach(field => {
-                url.searchParams.append('fields[]', field);
-            });
-            
-            console.log('SearchIQS Cleaner: Fetching from URL:', url.toString());
+            console.log('SearchIQS Cleaner: Fetching all fields first to identify available ones...');
             
             const response = await fetch(url.toString(), {
                 headers: {
@@ -322,45 +318,77 @@ class AirtablePanel {
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('SearchIQS Cleaner: Error response:', errorText);
+                
+                // Try without view if view fails
+                if (response.status === 422 && errorText.includes('view')) {
+                    console.log('SearchIQS Cleaner: View failed, trying without view...');
+                    const fallbackUrl = new URL(baseUrl);
+                    fallbackUrl.searchParams.append('maxRecords', '100');
+                    
+                    const fallbackResponse = await fetch(fallbackUrl.toString(), {
+                        headers: {
+                            'Authorization': `Bearer ${AIRTABLE_CONFIG.API_TOKEN}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (fallbackResponse.ok) {
+                        const fallbackData = await fallbackResponse.json();
+                        this.handleSuccessfulResponse(fallbackData);
+                        return;
+                    }
+                }
+                
                 throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
             }
             
             const data = await response.json();
-            this.records = data.records || [];
-            this.filteredRecords = [...this.records];
-            
-            console.log(`SearchIQS Cleaner: Loaded ${this.records.length} records from Focus view`);
-            
-            // Show available fields for debugging
-            if (this.records.length > 0) {
-                console.log('SearchIQS Cleaner: Available fields:', Object.keys(this.records[0].fields));
-            }
-            
-            this.renderRecords();
+            this.handleSuccessfulResponse(data);
             
         } catch (error) {
             console.error('SearchIQS Cleaner: Error loading records:', error);
-            this.showError(`Failed to load records: ${error.message}`);
+            this.showError(`Failed to load records. This might be due to field name mismatches or view access issues. Check console for details.`);
         } finally {
             this.isLoading = false;
         }
     }
-
+    
+    handleSuccessfulResponse(data) {
+        this.records = data.records || [];
+        this.filteredRecords = [...this.records];
+        
+        console.log(`SearchIQS Cleaner: Loaded ${this.records.length} records`);
+        
+        // Show available fields for debugging and future field name correction
+        if (this.records.length > 0) {
+            const availableFields = Object.keys(this.records[0].fields);
+            console.log('SearchIQS Cleaner: Available fields:', availableFields);
+            
+            // Check which of our configured fields actually exist
+            const missingFields = AIRTABLE_CONFIG.FIELDS.filter(field => !availableFields.includes(field));
+            if (missingFields.length > 0) {
+                console.warn('SearchIQS Cleaner: These configured fields do not exist:', missingFields);
+            }
+        }
+        
+        this.renderRecords();
+    }
+    
     handleSearch(query) {
         const searchTerm = query.toLowerCase().trim();
-
+        
         if (!searchTerm) {
             this.filteredRecords = [...this.records];
         } else {
             this.filteredRecords = this.records.filter(record => {
                 const fields = record.fields;
-                return AIRTABLE_CONFIG.FIELDS.some(fieldName => {
-                    const value = fields[fieldName];
+                // Search across ALL available fields, not just configured ones
+                return Object.values(fields).some(value => {
                     return value && value.toString().toLowerCase().includes(searchTerm);
                 });
             });
         }
-
+        
         this.renderRecords();
     }
 
@@ -371,7 +399,7 @@ class AirtablePanel {
             console.log('SearchIQS Cleaner: Changed to view:', viewId);
         }
     }
-    
+
     renderRecords() {
         if (this.filteredRecords.length === 0) {
             this.showEmpty();
@@ -380,19 +408,37 @@ class AirtablePanel {
         
         const listHTML = this.filteredRecords.map(record => {
             const fields = record.fields;
-            const foreclosure = fields['Foreclosure'] || '';
-            const lastName = fields['Last (From Owner)'] || '';
-            const firstName = fields['First (From Owner)'] || '';
-            const company = fields['Company Name'] || '';
-            const sbl = fields['SBL'] || '';
+            
+            // Try different possible field names based on what we've seen
+            const foreclosure = fields['Foreclosure'] || fields['Property'] || '';
+            const lastName = fields['Last (From Owner)'] || fields['Last (from Owner)'] || fields['Owner Last'] || '';
+            const firstName = fields['First (From Owner)'] || fields['First (from Owner)'] || fields['Owner First'] || '';
+            const company = fields['Company Name'] || fields['Company'] || '';
+            const sbl = fields['SBL'] || fields['Tax Map ID'] || '';
             const county = fields['County'] || '';
             const city = fields['City'] || '';
-            const firstLineAddress = fields['First Line Address'] || '';
-            const fullAddress = fields['Full Address'] || '';
+            const firstLineAddress = fields['First Line Address'] || fields['Address'] || fields['Property Address'] || '';
+            const fullAddress = fields['Full Address'] || fields['Complete Address'] || '';
             
-            // Use Foreclosure as the display name, fallback to names, then "Unnamed Record"
-            const displayName = foreclosure || [firstName, lastName].filter(n => n).join(' ') || 'Unnamed Record';
-            
+            // Use Foreclosure as the display name, fallback to names, then show some field that exists
+            let displayName = foreclosure;
+            if (!displayName && (firstName || lastName)) {
+                displayName = [firstName, lastName].filter(n => n).join(' ');
+            }
+            if (!displayName) {
+                // Try to find any meaningful field to use as a name
+                const meaningfulFields = ['Property', 'Address', 'Tax Map ID', 'SBL'];
+                for (const field of meaningfulFields) {
+                    if (fields[field]) {
+                        displayName = fields[field];
+                        break;
+                    }
+                }
+            }
+            if (!displayName) {
+                displayName = 'Record ' + record.id.substring(0, 8);
+            }
+
             return `
                 <li style="padding: 16px 20px; border-bottom: 1px solid #f0f0f0; transition: background-color 0.2s; position: relative; list-style: none;" 
                     data-record-id="${record.id}"
@@ -412,7 +458,7 @@ class AirtablePanel {
                 </li>
             `;
         }).join('');
-        
+
         this.contentEl.innerHTML = `<ul style="padding: 0; margin: 0; list-style: none;">${listHTML}</ul>`;
     }
 
@@ -424,32 +470,32 @@ class AirtablePanel {
             this.copyRecordToClipboard(record, recordElement);
         }
     }
-    
+
     async copyFieldData(event, fieldValue) {
         // Prevent event bubbling to parent elements
         event.stopPropagation();
-        
+
         try {
             await navigator.clipboard.writeText(fieldValue);
-            
+
             // Visual feedback on the clicked element
             const element = event.target;
             const originalBg = element.style.backgroundColor;
             element.style.backgroundColor = '#e8f5e8';
             element.innerHTML = `${fieldValue} ✓`;
-            
+
             setTimeout(() => {
                 element.style.backgroundColor = originalBg;
                 element.innerHTML = fieldValue;
             }, 1500);
-            
+
             console.log('SearchIQS Cleaner: Copied field data to clipboard:', fieldValue);
-            
+
         } catch (error) {
             console.error('SearchIQS Cleaner: Failed to copy field data:', error);
         }
     }
-    
+
     async copyRecordToClipboard(record, element) {
         const fields = record.fields;
 
