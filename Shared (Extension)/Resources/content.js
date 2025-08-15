@@ -290,61 +290,61 @@ class AirtablePanel {
         // For now, just use the default view
         console.log('SearchIQS Cleaner: Using default view configuration');
     }
-    
+
     async loadRecords() {
         if (this.isLoading) return;
-        
+
         this.isLoading = true;
         this.showLoading();
-        
+
         try {
             const baseUrl = `${AIRTABLE_CONFIG.BASE_URL}/${AIRTABLE_CONFIG.BASE_ID}/${AIRTABLE_CONFIG.TABLE_ID}`;
             console.log('SearchIQS Cleaner: Loading records from Focus view...');
-            
+
             // First try: Get records without field filtering to see what fields are available
             let url = new URL(baseUrl);
             url.searchParams.append('view', this.currentView);
             url.searchParams.append('maxRecords', '100'); // Get more records
-            
+
             console.log('SearchIQS Cleaner: Fetching all fields first to identify available ones...');
-            
+
             const response = await fetch(url.toString(), {
                 headers: {
                     'Authorization': `Bearer ${AIRTABLE_CONFIG.API_TOKEN}`,
                     'Content-Type': 'application/json'
                 }
             });
-            
+
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('SearchIQS Cleaner: Error response:', errorText);
-                
+
                 // Try without view if view fails
                 if (response.status === 422 && errorText.includes('view')) {
                     console.log('SearchIQS Cleaner: View failed, trying without view...');
                     const fallbackUrl = new URL(baseUrl);
                     fallbackUrl.searchParams.append('maxRecords', '100');
-                    
+
                     const fallbackResponse = await fetch(fallbackUrl.toString(), {
                         headers: {
                             'Authorization': `Bearer ${AIRTABLE_CONFIG.API_TOKEN}`,
                             'Content-Type': 'application/json'
                         }
                     });
-                    
+
                     if (fallbackResponse.ok) {
                         const fallbackData = await fallbackResponse.json();
                         this.handleSuccessfulResponse(fallbackData);
                         return;
                     }
                 }
-                
+
                 throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
             }
-            
+
             const data = await response.json();
             this.handleSuccessfulResponse(data);
-            
+
         } catch (error) {
             console.error('SearchIQS Cleaner: Error loading records:', error);
             this.showError(`Failed to load records. This might be due to field name mismatches or view access issues. Check console for details.`);
@@ -352,31 +352,31 @@ class AirtablePanel {
             this.isLoading = false;
         }
     }
-    
+
     handleSuccessfulResponse(data) {
         this.records = data.records || [];
         this.filteredRecords = [...this.records];
-        
+
         console.log(`SearchIQS Cleaner: Loaded ${this.records.length} records`);
-        
+
         // Show available fields for debugging and future field name correction
         if (this.records.length > 0) {
             const availableFields = Object.keys(this.records[0].fields);
             console.log('SearchIQS Cleaner: Available fields:', availableFields);
-            
+
             // Check which of our configured fields actually exist
             const missingFields = AIRTABLE_CONFIG.FIELDS.filter(field => !availableFields.includes(field));
             if (missingFields.length > 0) {
                 console.warn('SearchIQS Cleaner: These configured fields do not exist:', missingFields);
             }
         }
-        
+
         this.renderRecords();
     }
-    
+
     handleSearch(query) {
         const searchTerm = query.toLowerCase().trim();
-        
+
         if (!searchTerm) {
             this.filteredRecords = [...this.records];
         } else {
@@ -388,7 +388,7 @@ class AirtablePanel {
                 });
             });
         }
-        
+
         this.renderRecords();
     }
 
@@ -409,51 +409,59 @@ class AirtablePanel {
         const listHTML = this.filteredRecords.map(record => {
             const fields = record.fields;
             
-            // Try different possible field names based on what we've seen
-            const foreclosure = fields['Foreclosure'] || fields['Property'] || '';
-            const lastName = fields['Last (From Owner)'] || fields['Last (from Owner)'] || fields['Owner Last'] || '';
-            const firstName = fields['First (From Owner)'] || fields['First (from Owner)'] || fields['Owner First'] || '';
-            const company = fields['Company Name'] || fields['Company'] || '';
-            const sbl = fields['SBL'] || fields['Tax Map ID'] || '';
-            const county = fields['County'] || '';
+            // Use actual field names from your Airtable
+            const foreclosure = fields['Foreclosure'] || '';
+            const auction = fields['Auction'] || '';
+            const number = fields['Number'] || '';
+            const location = fields['Location'] || '';
             const city = fields['City'] || '';
-            const firstLineAddress = fields['First Line Address'] || fields['Address'] || fields['Property Address'] || '';
-            const fullAddress = fields['Full Address'] || fields['Complete Address'] || '';
+            const sbl = fields['SBL'] || '';
+            const lotSize = fields['Lot Size'] || '';
+            const estMarketValue = fields['Est Market Value'] || '';
+            const salePrice = fields['Sale Price'] || '';
+            const foreclosureURL = fields['Foreclosure URL'] || '';
             
-            // Use Foreclosure as the display name, fallback to names, then show some field that exists
-            let displayName = foreclosure;
-            if (!displayName && (firstName || lastName)) {
-                displayName = [firstName, lastName].filter(n => n).join(' ');
-            }
-            if (!displayName) {
-                // Try to find any meaningful field to use as a name
-                const meaningfulFields = ['Property', 'Address', 'Tax Map ID', 'SBL'];
-                for (const field of meaningfulFields) {
-                    if (fields[field]) {
-                        displayName = fields[field];
-                        break;
-                    }
+            // Extract first and last names from existing fields (if they exist)
+            // You might have owner name fields - checking common variations
+            const ownerField = fields['Owner'] || fields['Owner Name'] || fields['Property Owner'] || '';
+            let firstName = '';
+            let lastName = '';
+            
+            if (ownerField) {
+                const nameParts = ownerField.split(' ');
+                if (nameParts.length >= 2) {
+                    firstName = nameParts[0];
+                    lastName = nameParts.slice(1).join(' ');
                 }
             }
-            if (!displayName) {
-                displayName = 'Record ' + record.id.substring(0, 8);
-            }
+            
+            // Create formatted name combinations
+            const firstLast = firstName && lastName ? `${firstName} ${lastName}` : '';
+            const lastFirst = firstName && lastName ? `${lastName}, ${firstName}` : '';
+            
+            // Use Foreclosure as the display name, fallback to location, then other meaningful fields
+            let displayName = foreclosure;
+            if (!displayName) displayName = location;
+            if (!displayName) displayName = `${city} - ${sbl}`;
+            if (!displayName) displayName = `Property ${number}`;
+            if (!displayName) displayName = 'Record ' + record.id.substring(0, 8);
 
             return `
                 <li style="padding: 16px 20px; border-bottom: 1px solid #f0f0f0; transition: background-color 0.2s; position: relative; list-style: none;" 
                     data-record-id="${record.id}"
                     onmouseover="this.style.backgroundColor='#f8f9fb'"
                     onmouseout="this.style.backgroundColor=''">
-                    <div style="font-size: 16px; font-weight: 600; color: #2c3e50; margin: 0 0 8px 0;">${this.escapeHtml(displayName)}</div>
-                    ${company ? `<div style="font-size: 14px; color: #667eea; margin: 0 0 8px 0; font-weight: 500;">${this.escapeHtml(company)}</div>` : ''}
+                    <div style="font-size: 16px; font-weight: 600; color: #2c3e50; margin: 0 0 8px 0; cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onclick="window.copyFieldData(event, '${this.escapeHtml(displayName)}')" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(displayName)}</div>
                     <div style="font-size: 13px; color: #666; line-height: 1.4;">
-                        ${firstName ? `<div style="margin: 2px 0;"><strong>First:</strong> <span class="field-data" data-value="${this.escapeHtml(firstName)}" onclick="window.airtablePanel.copyFieldData(event, '${this.escapeHtml(firstName)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstName)}</span></div>` : ''}
-                        ${lastName ? `<div style="margin: 2px 0;"><strong>Last:</strong> <span class="field-data" data-value="${this.escapeHtml(lastName)}" onclick="window.airtablePanel.copyFieldData(event, '${this.escapeHtml(lastName)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lastName)}</span></div>` : ''}
-                        ${sbl ? `<div style="margin: 2px 0;"><strong>SBL:</strong> <span class="field-data" data-value="${this.escapeHtml(sbl)}" onclick="window.airtablePanel.copyFieldData(event, '${this.escapeHtml(sbl)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(sbl)}</span></div>` : ''}
-                        ${county ? `<div style="margin: 2px 0;"><strong>County:</strong> <span class="field-data" data-value="${this.escapeHtml(county)}" onclick="window.airtablePanel.copyFieldData(event, '${this.escapeHtml(county)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(county)}</span></div>` : ''}
-                        ${city ? `<div style="margin: 2px 0;"><strong>City:</strong> <span class="field-data" data-value="${this.escapeHtml(city)}" onclick="window.airtablePanel.copyFieldData(event, '${this.escapeHtml(city)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(city)}</span></div>` : ''}
-                        ${firstLineAddress ? `<div style="margin: 2px 0;"><strong>Address:</strong> <span class="field-data" data-value="${this.escapeHtml(firstLineAddress)}" onclick="window.airtablePanel.copyFieldData(event, '${this.escapeHtml(firstLineAddress)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstLineAddress)}</span></div>` : ''}
-                        ${fullAddress && fullAddress !== firstLineAddress ? `<div style="margin: 2px 0;"><strong>Full Address:</strong> <span class="field-data" data-value="${this.escapeHtml(fullAddress)}" onclick="window.airtablePanel.copyFieldData(event, '${this.escapeHtml(fullAddress)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(fullAddress)}</span></div>` : ''}
+                        ${firstLast ? `<div style="margin: 2px 0;"><strong>First Last:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(firstLast)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(firstLast)}</span></div>` : ''}
+                        ${lastFirst ? `<div style="margin: 2px 0;"><strong>Last, First:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(lastFirst)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lastFirst)}</span></div>` : ''}
+                        ${sbl ? `<div style="margin: 2px 0;"><strong>SBL:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(sbl)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(sbl)}</span></div>` : ''}
+                        ${city ? `<div style="margin: 2px 0;"><strong>City:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(city)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(city)}</span></div>` : ''}
+                        ${location ? `<div style="margin: 2px 0;"><strong>Location:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(location)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(location)}</span></div>` : ''}
+                        ${auction ? `<div style="margin: 2px 0;"><strong>Auction:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(auction)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(auction)}</span></div>` : ''}
+                        ${estMarketValue ? `<div style="margin: 2px 0;"><strong>Est Market Value:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(estMarketValue)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(estMarketValue)}</span></div>` : ''}
+                        ${salePrice ? `<div style="margin: 2px 0;"><strong>Sale Price:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(salePrice)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(salePrice)}</span></div>` : ''}
+                        ${lotSize ? `<div style="margin: 2px 0;"><strong>Lot Size:</strong> <span class="field-data" onclick="window.copyFieldData(event, '${this.escapeHtml(lotSize)}')" style="cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor=''">${this.escapeHtml(lotSize)}</span></div>` : ''}
                     </div>
                 </li>
             `;
@@ -471,30 +479,7 @@ class AirtablePanel {
         }
     }
 
-    async copyFieldData(event, fieldValue) {
-        // Prevent event bubbling to parent elements
-        event.stopPropagation();
-
-        try {
-            await navigator.clipboard.writeText(fieldValue);
-
-            // Visual feedback on the clicked element
-            const element = event.target;
-            const originalBg = element.style.backgroundColor;
-            element.style.backgroundColor = '#e8f5e8';
-            element.innerHTML = `${fieldValue} ✓`;
-
-            setTimeout(() => {
-                element.style.backgroundColor = originalBg;
-                element.innerHTML = fieldValue;
-            }, 1500);
-
-            console.log('SearchIQS Cleaner: Copied field data to clipboard:', fieldValue);
-
-        } catch (error) {
-            console.error('SearchIQS Cleaner: Failed to copy field data:', error);
-        }
-    }
+    
 
     async copyRecordToClipboard(record, element) {
         const fields = record.fields;
@@ -552,6 +537,32 @@ class AirtablePanel {
         return div.innerHTML;
     }
 }
+
+// Global function for copying field data (needed for onclick handlers)
+window.copyFieldData = async function(event, fieldValue) {
+    event.stopPropagation();
+    
+    try {
+        await navigator.clipboard.writeText(fieldValue);
+        
+        const element = event.target;
+        const originalBg = element.style.backgroundColor;
+        const originalText = element.innerHTML;
+        
+        element.style.backgroundColor = '#e8f5e8';
+        element.innerHTML = `${fieldValue} ✓`;
+        
+        setTimeout(() => {
+            element.style.backgroundColor = originalBg;
+            element.innerHTML = originalText;
+        }, 1500);
+        
+        console.log('SearchIQS Cleaner: Copied field data to clipboard:', fieldValue);
+        
+    } catch (error) {
+        console.error('SearchIQS Cleaner: Failed to copy field data:', error);
+    }
+};
 
 // Function to create the Airtable panel
 function createAirtablePanel() {
